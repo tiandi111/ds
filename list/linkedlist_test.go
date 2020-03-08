@@ -1,4 +1,4 @@
-package linkedlist
+package list
 
 import (
 	"github.com/tiandi111/ds/test"
@@ -128,5 +128,27 @@ func TestGenericLinkedListIterator_GetValue2(t *testing.T) {
 	for iter.HasNext() {
 		val := iter.Next().GetValue()
 		test.Assert(t, iter.index, val)
+	}
+}
+
+func BenchmarkGenericLinkedList_Del_Middle(b *testing.B) {
+	lList := NewGenericLinkedList()
+	for i := 0; i < BenchmarkListSize; i++ {
+		lList.Add(i)
+	}
+	b.ResetTimer()
+	for i := 0; i < BenchmarkDelReps; i++ {
+		lList.Del(lList.Len() / 2)
+	}
+}
+
+func BenchmarkGenericLinkedList_Del_Head(b *testing.B) {
+	lList := NewGenericLinkedList()
+	for i := 0; i < BenchmarkListSize; i++ {
+		lList.Add(i)
+	}
+	b.ResetTimer()
+	for i := 0; i < BenchmarkDelReps; i++ {
+		lList.Del(lList.Len() / 10)
 	}
 }

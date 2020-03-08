@@ -1,6 +1,6 @@
-package linkedlist
+package list
 
-type LinkedList interface {
+type List interface {
 	Add(interface{})
 	Get(int) interface{}
 	Del(int) interface{}
