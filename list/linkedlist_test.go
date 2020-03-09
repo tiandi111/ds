@@ -138,7 +138,7 @@ func BenchmarkGenericLinkedList_Del_Middle(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < BenchmarkDelReps; i++ {
-		lList.Del(lList.Len() / 2)
+		lList.Del(lList.Len() * BenchmarkDelMiddlePosition / BenchmarkDelDeNominator)
 	}
 }
 
@@ -149,6 +149,17 @@ func BenchmarkGenericLinkedList_Del_Head(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < BenchmarkDelReps; i++ {
-		lList.Del(lList.Len() / 10)
+		lList.Del(lList.Len() * BenchmarkDelHeadPosition / BenchmarkDelDeNominator)
+	}
+}
+
+func BenchmarkGenericLinkedList_Del_Tail(b *testing.B) {
+	lList := NewGenericLinkedList()
+	for i := 0; i < BenchmarkListSize; i++ {
+		lList.Add(i)
+	}
+	b.ResetTimer()
+	for i := 0; i < BenchmarkDelReps; i++ {
+		lList.Del(lList.Len() * BenchmarkDelTailPosition / BenchmarkDelDeNominator)
 	}
 }

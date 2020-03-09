@@ -48,6 +48,7 @@ func TestGenericArrayList_Del3(t *testing.T) {
 	}()
 	list := NewGenericArrayList()
 	list.Del(-1)
+
 }
 
 func BenchmarkGenericArrayList_Del_Middle(b *testing.B) {
@@ -57,7 +58,7 @@ func BenchmarkGenericArrayList_Del_Middle(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < BenchmarkDelReps; i++ {
-		aList.Del(aList.Len() / 2)
+		aList.Del(aList.Len() * BenchmarkDelMiddlePosition / BenchmarkDelDeNominator)
 	}
 }
 
@@ -68,6 +69,17 @@ func BenchmarkGenericArrayList_Del_Head(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < BenchmarkDelReps; i++ {
-		aList.Del(aList.Len() / 10)
+		aList.Del(aList.Len() * BenchmarkDelHeadPosition / BenchmarkDelDeNominator)
+	}
+}
+
+func BenchmarkGenericArrayList_Del_Tail(b *testing.B) {
+	aList := NewGenericArrayList()
+	for i := 0; i < BenchmarkListSize; i++ {
+		aList.Add(i)
+	}
+	b.ResetTimer()
+	for i := 0; i < BenchmarkDelReps; i++ {
+		aList.Del(aList.Len() * BenchmarkDelTailPosition / BenchmarkDelDeNominator)
 	}
 }
