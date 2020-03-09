@@ -37,6 +37,24 @@ func TestGenericBinarySearchTree_Find2(t *testing.T) {
 	test.AssertTrue(t, tree.Find(cpb{4}) == nil)
 }
 
+func TestGenericBinarySearchTree_Insert(t *testing.T) {
+	tree := NewGenericBinarySearchTree()
+	tree.Insert(cpb{0})
+	test.AssertTrue(t, tree.root.val.CompareTo(cpb{0}) == 0)
+}
+
+// Random test
+func TestGenericBinarySearchTree_Insert2(t *testing.T) {
+	rand.Seed(time.Now().Unix())
+	tree := NewGenericBinarySearchTree()
+	for i := 0; i < 1000; i++ {
+		c := cpb{rand.Intn(100)}
+		tree.Insert(c)
+		test.AssertTrue(t, tree.Find(c).(cpb).CompareTo(c) == 0)
+		test.AssertTrue(t, tree.validate(false))
+	}
+}
+
 func TestGenericBinarySearchTree_Remove(t *testing.T) {
 	tree := NewGenericBinarySearchTree()
 	test.AssertFalse(t, tree.Remove(cpb{1}))
@@ -60,7 +78,7 @@ func TestGenericBinarySearchTree_Remove2(t *testing.T) {
 // Random test
 func TestGenericBinarySearchTree_Remove3(t *testing.T) {
 	rand.Seed(time.Now().Unix())
-	for i := 1; i < 5000; i++ {
+	for i := 1; i < 1000; i++ {
 		// the size is i
 		tree := generateRandomBST(i)
 		for j := 0; j < i+1; j++ {
@@ -79,6 +97,14 @@ func TestGenericBinarySearchTree_validate(t *testing.T) {
 	root.left, root.right = left, right
 	tree.root = root
 	test.AssertTrue(t, tree.validate(false))
+}
+
+func TestGenericBinarySearchTree_validate2(t *testing.T) {
+	tree := NewGenericBinarySearchTree()
+	root, left, right := newBstNode(cpb{2}), newBstNode(cpb{3}), newBstNode(cpb{3})
+	root.left, root.right = left, right
+	tree.root = root
+	test.AssertFalse(t, tree.validate(false))
 }
 
 func TestGenericBinarySearchTree_generateRandomBST(t *testing.T) {

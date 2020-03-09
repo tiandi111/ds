@@ -15,11 +15,27 @@ func NewGenericBinarySearchTree() *GenericBinarySearchTree {
 }
 
 func (t *GenericBinarySearchTree) Insert(c ds.Comparable) {
+	i := newBstNode(c)
 	if t.root == nil {
-		t.root = newBstNode(c)
+		t.root = i
 		return
 	}
-
+	n := t.root
+	for n != nil {
+		if n.val.CompareTo(c) >= 0 {
+			if n.left == nil {
+				n.left = i
+				return
+			}
+			n = n.left
+		} else {
+			if n.right == nil {
+				n.right = i
+				return
+			}
+			n = n.right
+		}
+	}
 }
 
 func (t *GenericBinarySearchTree) Remove(c ds.Comparable) bool {
