@@ -36,13 +36,14 @@ func (l *GenericArrayList) NewIterator() *GenericArrayListIterator {
 	return &GenericArrayListIterator{-1, l.arr}
 }
 
+// todo: test iterator
 type GenericArrayListIterator struct {
 	index int
 	arr   *[]interface{}
 }
 
 func (i *GenericArrayListIterator) HasNext() bool {
-	return i.index < len(*i.arr)-1
+	return i.index <= len(*i.arr)-1
 }
 
 func (i *GenericArrayListIterator) Next() *GenericArrayListIterator {

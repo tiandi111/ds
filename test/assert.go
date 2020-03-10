@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-// code in this package comes from etcd
+// code in this package is copied from project etcd :)
 
 func Assert(t *testing.T, e, g interface{}, msg ...string) {
 	if (e == nil || g == nil) && (isNil(e) && isNil(g)) {
@@ -22,7 +22,7 @@ func Assert(t *testing.T, e, g interface{}, msg ...string) {
 }
 
 func AssertNonNil(t *testing.T, got interface{}) {
-	if got == nil {
+	if got == nil || isNil(got) {
 		t.Errorf("expected non-nil value, got %v", got)
 	}
 }

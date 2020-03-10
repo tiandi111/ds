@@ -36,58 +36,60 @@ func (t *GenericBinarySearchTree) Insert(c ds.Comparable) {
 			n = n.right
 		}
 	}
+	t.size++
 }
 
-func (t *GenericBinarySearchTree) Remove(c ds.Comparable) bool {
-	return t.remove(c)
+func (t *GenericBinarySearchTree) Remove(c ds.Comparable) ds.Comparable {
+	return t.remove(c).value()
 }
 
 // delete the top-most child of n that is equal to c
-// return true if a node is deleted
-// return false if
-// 	(1)given root is nil
-// 	(2)given value is nil
-//	(3)no such child that is equal to c
-func (t *GenericBinarySearchTree) remove(c ds.Comparable) bool {
+// return nil if no such node
+// return the node if it's deleted
+func (t *GenericBinarySearchTree) remove(c ds.Comparable) *bstNode {
 	n := t.root
-	if n == nil || c == nil {
-		return false
+	if n == nil {
+		return nil
 	}
+
 	p, d, isLeftChild := findWithParent(n, c)
 	if d == nil {
-		return false
+		return nil
 	}
+
+	var replace *bstNode
 	switch {
 	case d.left == nil && d.right == nil:
-		// node is leaf node
-		// parent is nil, node is the root
-		if p == nil {
-			t.root = nil
-		} else {
-			if isLeftChild {
-				p.left = nil
-			} else {
-				p.right = nil
-			}
-		}
+		// node is a leaf node
+		// parent is nil means d is the root, so we delete it
+		replace = nil
 	case d.left != nil && d.right != nil:
-		// node has left and right child
-		// replace it with the left most child of its right child
-		succ := delLeftMost(d.right)
-		d.val = succ.val
-		if d.right.left == nil {
-			d.right = d.right.right
+		// node has both left and right child
+		// we replace the node with the left-most child of its right child
+		replace = delLeftMost(d.right)
+		replace.left = d.left
+		if replace != d.right {
+			replace.right = d.right
 		}
 	case d.left != nil:
 		// node only has left child
-		// replace it with its left child
-		*d = *d.left
+		replace = d.left
 	case d.right != nil:
 		// node only has right child
-		// replace it with its right child
-		*d = *d.right
+		replace = d.right
 	}
-	return true
+
+	switch {
+	case p == nil:
+		t.root = replace
+	case isLeftChild:
+		p.left = replace
+	case !isLeftChild:
+		p.right = replace
+	}
+
+	t.size--
+	return d
 }
 
 func (t *GenericBinarySearchTree) Find(c ds.Comparable) interface{} {
@@ -98,10 +100,54 @@ func (t *GenericBinarySearchTree) Find(c ds.Comparable) interface{} {
 	return node.value()
 }
 
+// return values that fall in the range [from, to)
+// the return slice is sorted
 func (t *GenericBinarySearchTree) RangeFind(from, to ds.Comparable) []interface{} {
+	if from.CompareTo(to) > 0 {
+		panic(errInvalidRangeFindArgs())
+	}
+
+	n := t.root
+	data := make([]interface{}, 0)
+
+	if t.root == nil || from.CompareTo(to) == 0 {
+		return data
+	}
+
+	stack := make([]*bstNode, 0)
+	stack = pushAllLeftChild(stack, n)
+
+	for len(stack) > 0 {
+		l := len(stack)
+		// pop the top node
+		cur := stack[l-1]
+		stack = stack[:l-1]
+
+		if cur.val.CompareTo(to) >= 0 {
+			return data
+		}
+
+		if cur.val.CompareTo(from) >= 0 {
+			data = append(data, cur.val)
+		}
+
+		if cur.right != nil {
+			stack = pushAllLeftChild(stack, cur.right)
+		}
+	}
+	return data
+}
+
+func (t *GenericBinarySearchTree) Size() int {
+	return t.size
+}
+
+// todo: implement in-order iterator
+func (t *GenericBinarySearchTree) NewIterator() ds.Iterator {
 	return nil
 }
 
+// validate the tree by in-order traversal
 func (t *GenericBinarySearchTree) validate(enableLog bool) bool {
 	if t.root == nil {
 		return true
@@ -165,7 +211,7 @@ func delLeftMost(n *bstNode) *bstNode {
 // Validate the tree rooted at n by in-order traversal
 func (n *bstNode) validate(enableLog bool) bool {
 	stack := make([]*bstNode, 0)
-	stack = pushAllLeft(stack, n)
+	stack = pushAllLeftChild(stack, n)
 	var last ds.Comparable
 	i := 0
 	for len(stack) > 0 {
@@ -186,7 +232,7 @@ func (n *bstNode) validate(enableLog bool) bool {
 
 		last = cur.val
 		if cur.right != nil {
-			stack = pushAllLeft(stack, cur.right)
+			stack = pushAllLeftChild(stack, cur.right)
 		}
 		i++
 	}
@@ -196,7 +242,7 @@ func (n *bstNode) validate(enableLog bool) bool {
 	return true
 }
 
-func pushAllLeft(stack []*bstNode, n *bstNode) []*bstNode {
+func pushAllLeftChild(stack []*bstNode, n *bstNode) []*bstNode {
 	for n != nil {
 		stack = append(stack, n)
 		n = n.left

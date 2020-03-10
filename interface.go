@@ -2,9 +2,9 @@ package ds
 
 type Comparable interface {
 	// return
-	// positive if this>other
-	// zero if this == other
-	// negative this < other
+	// this > other if this.CompareTo(other) > 0
+	// this = other if this.CompareTo(other) == 0
+	// this < otehr if this.CompareTo(other) < 0
 	CompareTo(other Comparable) int
 }
 

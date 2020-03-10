@@ -3,9 +3,9 @@ package tree
 import "fmt"
 
 var (
-	errNilTreeNode = fmt.Errorf("operate no nil tree node")
+	ErrInvalidRangeFindArgs = fmt.Errorf("from.CompareTo(to) <= 0 must hold")
 )
 
-func errNilPointer() error {
-	return errNilTreeNode
+func errInvalidRangeFindArgs() error {
+	return ErrInvalidRangeFindArgs
 }
