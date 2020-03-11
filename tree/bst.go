@@ -16,6 +16,7 @@ func NewGenericBinarySearchTree() *GenericBinarySearchTree {
 
 func (t *GenericBinarySearchTree) Insert(c ds.Comparable) {
 	i := newBstNode(c)
+	t.size++
 	if t.root == nil {
 		t.root = i
 		return
@@ -36,7 +37,6 @@ func (t *GenericBinarySearchTree) Insert(c ds.Comparable) {
 			n = n.right
 		}
 	}
-	t.size++
 }
 
 func (t *GenericBinarySearchTree) Remove(c ds.Comparable) ds.Comparable {

@@ -39,7 +39,7 @@ func TestGenericBinarySearchTree_Insert(t *testing.T) {
 func TestGenericBinarySearchTree_Insert2(t *testing.T) {
 	rand.Seed(time.Now().Unix())
 	tree := NewGenericBinarySearchTree()
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 10000; i++ {
 		c := test.Cpb{-i + rand.Intn(2*i+1)}
 		tree.Insert(c)
 		test.AssertTrue(t, tree.Find(c).(test.Cpb).CompareTo(c) == 0)

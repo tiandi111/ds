@@ -22,28 +22,40 @@ func NewGenericSkipList() *GenericSkipList {
 	return &GenericSkipList{nil, 4, 0}
 }
 
-func NewGenericSkipListWithP(p float32) *GenericSkipList {
-	if p < 0 || p > 1 {
+func NewGenericSkipListWithN(n int) *GenericSkipList {
+	if n < 0 {
 		panic(errInvalidSkipListP())
 	}
 	sl := NewGenericSkipList()
-	sl.avgUpLevelTries = int(1 / p)
+	sl.avgUpLevelTries = n
 	return sl
 }
 
 func (l *GenericSkipList) Add(v ds.Comparable) {
+	// random generated level
+	// P(level == 1) = 1-p
+	// P(level == 2) = p*(1-p)
+	// p(level == 3) = p*p*(1-p)
+	// ...
 	level := l.level()
 	if l.head == nil || level > l.head.maxLevel {
-		// construct more level on the head node
+		// construct higher levels on the old head node
 		l.head = growHeadSlNode(level, l.head)
 	}
-	i := l.head.find(level, v)
-	i.insert(level, v)
+	l.head.insert(level, v)
 	l.len++
 }
 
+// get the first occurrence of v
 func (l *GenericSkipList) Get(v ds.Comparable) ds.Comparable {
-	return l.head.find(0, v).value()
+	if l.head == nil {
+		return nil
+	}
+	node :=  l.head.findExact(v)
+	if node == nil {
+		return nil
+	}
+	return node.value()
 }
 
 // delete the first occurrence of v
@@ -51,7 +63,13 @@ func (l *GenericSkipList) Del(v ds.Comparable) ds.Comparable {
 	if l.head == nil {
 		return nil
 	}
-	return l.head.del(v).value()
+	node := l.head.del(v)
+	// no such node
+	if node==nil {
+		return nil
+	}
+	l.len--
+	return node.value()
 }
 
 func (l *GenericSkipList) Len() int {
@@ -60,6 +78,19 @@ func (l *GenericSkipList) Len() int {
 
 func (l *GenericSkipList) MaxLevel() int {
 	return l.head.maxLevel
+}
+
+func (l *GenericSkipList) Info() {
+	fmt.Printf("Size: %d MaxLevel: %d \n", l.Len(), l.MaxLevel())
+	for i:=l.MaxLevel(); i>=0; i-- {
+		n := l.head
+		cnt := 0
+		for n!=nil {
+			cnt++
+			n = n.next[i]
+		}
+		fmt.Printf("Number of nodes at level %dth: %d\n", i, cnt)
+	}
 }
 
 // generate a level by p = 1/avgUpLevelTries
@@ -82,7 +113,7 @@ type slNode struct {
 	maxLevel int
 }
 
-// newHeadSlNode construct more level on the oldHead
+// newHeadSlNode construct higher levels on the oldHead
 func growHeadSlNode(level int, oldHead *slNode) *slNode {
 	if level < 0 {
 		panic(errInvaldSkipListHeadNodeLevel())
@@ -99,9 +130,9 @@ func growHeadSlNode(level int, oldHead *slNode) *slNode {
 	return oldHead
 }
 
-// first find the insert position, then insert the value node all the way to the bottom
+// insert the given value under the given level
 func (n *slNode) insert(level int, v ds.Comparable) {
-	node := &slNode{make([]*slNode, len(n.next)), v, false, n.maxLevel}
+	node := &slNode{make([]*slNode, level+1), v, false, level}
 	this := n
 	last := n
 	for i := this.maxLevel; i >= 0; i-- {
@@ -119,17 +150,28 @@ func (n *slNode) insert(level int, v ds.Comparable) {
 }
 
 // find the insert position at the given level
-// node will be inserted at the largest smaller node or head node
+// the insert position is the largest smaller node
 func (n *slNode) find(level int, v ds.Comparable) *slNode {
 	node := n
 	last := n
 	for i := node.maxLevel; i >= level; i-- {
-		for node != nil && (node.isHead || node.val.CompareTo(v) <= 0) {
+		for node != nil && (node.isHead || node.val.CompareTo(v) < 0) {
 			last = node
 			node = node.next[i]
 		}
+		node = last
 	}
 	return last
+}
+
+// find the exact node
+// if no such node, return nil
+func (n *slNode) findExact(v ds.Comparable) *slNode {
+	node := n.find(0, v)
+	if node.next[0]!=nil && node.next[0].value().CompareTo(v) == 0 {
+		return node.next[0]
+	}
+	return nil
 }
 
 func (n *slNode) del(v ds.Comparable) *slNode {
@@ -138,12 +180,14 @@ func (n *slNode) del(v ds.Comparable) *slNode {
 	var delNode *slNode
 	for i := node.maxLevel; i >= 0; i-- {
 		for node != nil && (node.isHead || node.val.CompareTo(v) < 0) {
-			node = node.next[i]
 			last = node
+			node = node.next[i]
 		}
-		if node != nil && node.val.CompareTo(v) == 0 {
-			last.next[i] = node.next[i]
+		if delNode==nil && node!=nil && !node.isHead && node.value().CompareTo(v)==0 {
 			delNode = node
+			last.next[i] = node.next[i]
+		} else if delNode != nil && delNode == node {
+			last.next[i] = node.next[i]
 		}
 		node = last
 	}

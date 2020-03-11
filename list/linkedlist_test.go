@@ -28,7 +28,6 @@ func TestGenericLinkedList_Add(t *testing.T) {
 func TestGenericLinkedList_Get(t *testing.T) {
 	defer func() {
 		got := recover()
-		test.AssertNonNil(t, got)
 		test.Assert(t, "index out of bound: 0", got)
 	}()
 	list := NewGenericLinkedList()
@@ -44,7 +43,6 @@ func TestGenericLinkedList_Get2(t *testing.T) {
 func TestGenericLinkedList_Del(t *testing.T) {
 	defer func() {
 		got := recover()
-		test.AssertNonNil(t, got)
 		test.Assert(t, "index out of bound: 0", got)
 	}()
 	list := NewGenericLinkedList()
@@ -112,7 +110,6 @@ func TestGenericLinkedListIterator_Next2(t *testing.T) {
 func TestGenericLinkedListIterator_GetValue(t *testing.T) {
 	defer func() {
 		got := recover()
-		test.AssertNonNil(t, got)
 		test.Assert(t, "call Next() to get the first element", got)
 	}()
 	iter := NewGenericLinkedList().NewIterator()
