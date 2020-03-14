@@ -51,7 +51,7 @@ func (l *GenericSkipList) Get(v ds.Comparable) ds.Comparable {
 	if l.head == nil {
 		return nil
 	}
-	node :=  l.head.findExact(v)
+	node := l.head.findExact(v)
 	if node == nil {
 		return nil
 	}
@@ -65,7 +65,7 @@ func (l *GenericSkipList) Del(v ds.Comparable) ds.Comparable {
 	}
 	node := l.head.del(v)
 	// no such node
-	if node==nil {
+	if node == nil {
 		return nil
 	}
 	l.len--
@@ -82,10 +82,10 @@ func (l *GenericSkipList) MaxLevel() int {
 
 func (l *GenericSkipList) Info() {
 	fmt.Printf("Size: %d MaxLevel: %d \n", l.Len(), l.MaxLevel())
-	for i:=l.MaxLevel(); i>=0; i-- {
+	for i := l.MaxLevel(); i >= 0; i-- {
 		n := l.head
 		cnt := 0
-		for n!=nil {
+		for n != nil {
 			cnt++
 			n = n.next[i]
 		}
@@ -168,7 +168,7 @@ func (n *slNode) find(level int, v ds.Comparable) *slNode {
 // if no such node, return nil
 func (n *slNode) findExact(v ds.Comparable) *slNode {
 	node := n.find(0, v)
-	if node.next[0]!=nil && node.next[0].value().CompareTo(v) == 0 {
+	if node.next[0] != nil && node.next[0].value().CompareTo(v) == 0 {
 		return node.next[0]
 	}
 	return nil
@@ -183,7 +183,7 @@ func (n *slNode) del(v ds.Comparable) *slNode {
 			last = node
 			node = node.next[i]
 		}
-		if delNode==nil && node!=nil && !node.isHead && node.value().CompareTo(v)==0 {
+		if delNode == nil && node != nil && !node.isHead && node.value().CompareTo(v) == 0 {
 			delNode = node
 			last.next[i] = node.next[i]
 		} else if delNode != nil && delNode == node {

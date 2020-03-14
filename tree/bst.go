@@ -43,7 +43,7 @@ func (t *GenericBinarySearchTree) Remove(c ds.Comparable) ds.Comparable {
 	return t.remove(c).value()
 }
 
-// delete the top-most child of n that is equal to c
+// delete the top-most node equal to c
 // return nil if no such node
 // return the node if it's deleted
 func (t *GenericBinarySearchTree) remove(c ds.Comparable) *bstNode {
@@ -60,8 +60,6 @@ func (t *GenericBinarySearchTree) remove(c ds.Comparable) *bstNode {
 	var replace *bstNode
 	switch {
 	case d.left == nil && d.right == nil:
-		// node is a leaf node
-		// parent is nil means d is the root, so we delete it
 		replace = nil
 	case d.left != nil && d.right != nil:
 		// node has both left and right child
@@ -72,10 +70,8 @@ func (t *GenericBinarySearchTree) remove(c ds.Comparable) *bstNode {
 			replace.right = d.right
 		}
 	case d.left != nil:
-		// node only has left child
 		replace = d.left
 	case d.right != nil:
-		// node only has right child
 		replace = d.right
 	}
 
@@ -165,14 +161,13 @@ func newBstNode(v ds.Comparable) *bstNode {
 	return &bstNode{val: v}
 }
 
-// binary search the top-most node with value c
-// nil value is not supported
+// binary search the top-most node equals to c
 func find(n *bstNode, c ds.Comparable) *bstNode {
 	_, t, _ := findWithParent(n, c)
 	return t
 }
 
-// find the top-most node with value c
+// find the top-most node equals to c, its parent and whether it's left or right child
 // return (parent, target, isLeftChild)
 func findWithParent(n *bstNode, c ds.Comparable) (parent *bstNode, target *bstNode, isLeftChild bool) {
 	for n != nil && n.val.CompareTo(c) != 0 {

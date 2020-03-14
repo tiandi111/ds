@@ -1,17 +1,17 @@
 # ds
 A go implementation of common data structures. And their performance comparision.
 ## Status
-√ — Finished ○ —— In Development
+√ — Finished ○ —— In Development △ —— Testing
 ## List
-Array List√<br/>
-Linked List√<br/>
+Array List √<br/>
+Linked List √<br/>
 Queue<br/>
-Skip List○<br/>
+Skip List △<br/>
 Stack<br/>
 Zip List<br/>
 ## Tree
 Avl Tree<br/>
-Binary Search TREE√<br/>
+Binary Search Tree ○<br/>
 B+ Tree<br/>
 Red-Black Tree<br/>
 Prefix Tries<br/>
@@ -22,8 +22,8 @@ Hash Table<br/>
 Merkle Tree<br/>
 # Heap
 Array Heap<br/>
+Binomial Heap<br/>
 Fibonacci Heap<br/>
-Priority Queue<br/>
 # Set
 Union-Find Set<br/>
 ## Graph

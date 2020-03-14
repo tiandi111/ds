@@ -28,7 +28,6 @@ func BenchmarkSkipListSearch_LowP(b *testing.B) {
 	SkipListSearch(sl, SearchReps)
 }
 
-
 func BenchmarkBstSearch(b *testing.B) {
 	bst := InitBst(SearchSize)
 	b.ResetTimer()
