@@ -21,7 +21,7 @@ Bloom Filter<br/>
 Hash Table<br/>
 Merkle Tree<br/>
 # Heap
-Array Heap<br/>
+Array Heap √<br/>
 Binomial Heap<br/>
 Fibonacci Heap<br/>
 # Set
