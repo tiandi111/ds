@@ -5,18 +5,6 @@ import (
 	"github.com/tiandi111/ds"
 )
 
-//type MinHeap interface {
-//	Insert(comparable ds.Comparable)
-//	Min() interface{}
-//	DelMin() interface{}
-//	Size() int
-//	NewIterator() ds.Iterator
-//}
-//
-//type MergeableHeap interface {
-//	MinHeap
-//	Union(heap MergeableHeap)
-//}
 var (
 	errLinkTreesWithDiffDegree = fmt.Errorf("link trees with different degree")
 	errNilMinNode              = fmt.Errorf("minNode is nil, shouldn't happen")

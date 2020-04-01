@@ -75,5 +75,4 @@ func TestGenericSkipList_level(t *testing.T) {
 		l := sl.level()
 		cnt[l]++
 	}
-	fmt.Println(cnt)
 }

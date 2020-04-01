@@ -9,7 +9,7 @@ type node struct {
 	parent  *node
 	sibling *node
 	child   *node // left most child
-	degree  int   // the number of children
+	degree  int   // the number of child
 	val     ds.Comparable
 }
 ```
