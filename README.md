@@ -16,7 +16,7 @@ B+ Tree<br/>
 Red-Black Tree<br/>
 Prefix Tries<br/>
 ## Hash
-Bit Map<br/>
+Bit Map ○<br/>
 Bloom Filter<br/>
 Hash Table<br/>
 Merkle Tree<br/>
