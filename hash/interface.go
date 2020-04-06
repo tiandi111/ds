@@ -10,3 +10,8 @@ type BitMap interface {
 	Size() int64
 	NewIterator()
 }
+
+type BloomFilter interface {
+	Set(string)
+	Contains(string) bool
+}

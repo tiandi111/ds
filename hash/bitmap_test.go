@@ -3,6 +3,7 @@ package hash
 import (
 	"fmt"
 	"github.com/tiandi111/ds/test"
+	"k8s.io/apimachinery/pkg/util/rand"
 	"testing"
 )
 
@@ -77,11 +78,16 @@ func TestBitMap64_Count_InvalidRange(t *testing.T) {
 	bitmap.Count(5, 0)
 }
 
-func TestBitMap64_Count(t *testing.T) {
-	N := int64(1000)
-	bitmap := NewBitMap64(0)
-	for i := int64(0); i < N; i++ {
-		bitmap.Add(i%2 == 0)
+func TestBitMap64_Count_Random(t *testing.T) {
+	for i := int64(1); i <= 10000; i++ {
+		bitmap := NewBitMap64(i)
+		var cnt int64
+		for j := int64(0); j < i; j++ {
+			if rand.Intn(2) == 0 {
+				bitmap.Set(j)
+				cnt++
+			}
+		}
+		test.Assert(t, cnt, bitmap.Count(0, i))
 	}
-	test.Assert(t, int64(N/2), bitmap.Count(0, N))
 }

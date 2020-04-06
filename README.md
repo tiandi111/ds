@@ -12,6 +12,8 @@ Zip List<br/>
 ## Tree
 Avl Tree ○<br/>
 Binary Search Tree √<br/>
+Treap <br/>
+Zip Tree<br/>
 B+ Tree<br/>
 Red-Black Tree<br/>
 Prefix Tries<br/>

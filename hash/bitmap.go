@@ -70,21 +70,33 @@ func (m *BitMap64) Get(offset int64) bool {
 // left inclusive, right exclusive
 func (m *BitMap64) Count(st, end int64) int64 {
 	m.checkRange(st, end)
-	end--
 	var cnt int64
 	sthi, stlo, endhi, endlo := st>>6, st&offsetMask, end>>6, end&offsetMask
-	for (sthi < endhi || (sthi == endhi && stlo <= endlo)) && stlo != 64 {
-		if m.bmap[sthi]&setMap[stlo] != 0 {
-			cnt++
+
+	if sthi == endhi {
+		for ; stlo < endlo; stlo++ {
+			if m.bmap[sthi]&setMap[stlo] != 0 {
+				cnt++
+			}
 		}
-		stlo = stlo + 1
+		return cnt
+	} else if sthi < endhi {
+		for ; stlo < 64; stlo++ {
+			if m.bmap[sthi]&setMap[stlo] != 0 {
+				cnt++
+			}
+		}
 		if stlo == 64 {
 			sthi++
 		}
+	} else {
+		panic(fmt.Errorf(errInvalidRangeFmt, st, end))
 	}
-	for i := sthi; i < endhi; i++ {
-		cnt += quickCount(m.bmap[i])
+
+	for ; sthi < endhi; sthi++ {
+		cnt += quickCount(m.bmap[sthi])
 	}
+
 	for i := int64(0); i < endlo; i++ {
 		if m.bmap[endhi]&setMap[i] != 0 {
 			cnt++
@@ -96,6 +108,7 @@ func (m *BitMap64) Count(st, end int64) int64 {
 func count(n uint64) int64 {
 	var cnt int64
 	for ; n != 0; cnt++ {
+		// clear the last one-bit
 		n &= n - 1
 	}
 	return cnt
