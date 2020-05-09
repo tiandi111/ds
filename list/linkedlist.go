@@ -27,8 +27,8 @@ func (l *GenericLinkedList) Add(v interface{}) {
 		l.head = newTail
 		l.tail = newTail
 	} else {
-		l.tail.next = newNode(v)
-		l.tail = l.tail.next
+		l.tail.next = newTail
+		l.tail = newTail
 	}
 	l.len++
 	return
@@ -39,7 +39,7 @@ func (l *GenericLinkedList) Get(n int) interface{} {
 	return l.get(n).val
 }
 
-// Get the node at index n, start from 0
+// Get the node at index n, starts from 0
 func (l *GenericLinkedList) get(n int) *node {
 	if n < 0 || n >= l.len {
 		panic(fmt.Sprintf("index out of bound: %d", n))
@@ -64,21 +64,21 @@ func (l *GenericLinkedList) del(n int) *node {
 	var delNode *node
 	if n == 0 {
 		delNode = l.head
+		l.head = l.head.next
 		if l.len == 1 {
 			l.tail = nil
 		}
-		l.head = l.head.next
 	} else {
 		lastOne := l.get(n - 1)
 		delNode = lastOne.next
 		lastOne.next = delNode.next
+		if n == l.len-1 {
+			l.tail = lastOne
+		}
 	}
+	delNode.next = nil // avoid memory leak
 	l.len--
 	return delNode
-}
-
-func (l *GenericLinkedList) NewIterator() *GenericLinkedListIterator {
-	return &GenericLinkedListIterator{-1, l.head}
 }
 
 // List node
@@ -100,6 +100,10 @@ func (n *node) value() interface{} {
 type GenericLinkedListIterator struct {
 	index int
 	cur   *node
+}
+
+func (l *GenericLinkedList) NewIterator() *GenericLinkedListIterator {
+	return &GenericLinkedListIterator{-1, l.head}
 }
 
 func (i *GenericLinkedListIterator) HasNext() bool {

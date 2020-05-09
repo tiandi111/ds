@@ -5,21 +5,22 @@ A go implementation of common data structures. And their performance comparision
 ## List
 Array List √<br/>
 Linked List √<br/>
+Doubly Linked List △<br/>
 Queue<br/>
 Skip List ○<br/>
-Stack<br/>
+Stack √<br/>
 Zip List<br/>
 ## Tree
 Avl Tree ○<br/>
 Binary Search Tree √<br/>
-Treap <br/>
+Treap √<br/>
 Zip Tree<br/>
 B+ Tree<br/>
 Red-Black Tree<br/>
 Prefix Tries<br/>
 ## Hash
-Bit Map ○<br/>
-Bloom Filter<br/>
+Bit Map √<br/>
+Bloom Filter √<br/>
 Hash Table<br/>
 Merkle Tree<br/>
 # Heap

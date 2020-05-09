@@ -72,6 +72,8 @@ func sha256Hashing(data []byte, k int64) []uint64 {
 	hash2 := readUint64(hash[8:16])
 	hashes := make([]uint64, k)
 
+	// Kirsch-Mitzenmacher optimization
+	// see https://www.eecs.harvard.edu/~michaelm/postscripts/tr-02-05.pdf
 	for i := int64(0); i < k; i++ {
 		hashes[i] = hash1 + uint64(i)*hash2
 	}

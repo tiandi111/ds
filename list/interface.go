@@ -10,6 +10,11 @@ type List interface {
 	NewIterator() ds.Iterator
 }
 
+type SortedList interface {
+	List
+	Insert(comparable ds.Comparable) int
+}
+
 type Queue interface {
 	Append(comparable ds.Comparable)
 	First() ds.Comparable
@@ -19,9 +24,10 @@ type Queue interface {
 }
 
 type Stack interface {
-	Push(comparable ds.Comparable)
-	Top() ds.Comparable
-	Pop() ds.Comparable
+	Push(interface{})
+	Top() interface{}
+	Pop() interface{}
 	Size() int
+	IsEmpty() bool
 	NewIterator() ds.Iterator
 }

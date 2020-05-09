@@ -1,6 +1,7 @@
 package hash
 
-// todo: compressed bitmap
+// todo: compressed bitmap;
+// todo: do operations atomically
 type BitMap interface {
 	Add(bool) int64
 	Set(offset int64) bool

@@ -8,7 +8,7 @@ import (
 // code in this package is copied from project etcd :)
 
 func Assert(t *testing.T, e, g interface{}, msg ...string) {
-	if (e == nil || g == nil) && (isNil(e) && isNil(g)) {
+	if (e == nil || g == nil) && (IsNil(e) && IsNil(g)) {
 		return
 	}
 	if reflect.DeepEqual(e, g) {
@@ -22,7 +22,7 @@ func Assert(t *testing.T, e, g interface{}, msg ...string) {
 }
 
 func AssertNonNil(t *testing.T, got interface{}) {
-	if got == nil || isNil(got) {
+	if got == nil || IsNil(got) {
 		t.Errorf("expected non-nil value, got %v", got)
 	}
 }
@@ -39,7 +39,7 @@ func AssertFalse(t *testing.T, got bool, msg ...string) {
 	Assert(t, false, got, msg...)
 }
 
-func isNil(v interface{}) bool {
+func IsNil(v interface{}) bool {
 	if v == nil {
 		return true
 	}
