@@ -48,6 +48,8 @@ func spill(leaf *btnode, pstack []*btnode) {
 		if len(pstack) != 0 {
 			cur = pstack[len(pstack)-1]
 			at := cur.search(key)
+			cur.keys = append(cur.keys, key)
+			cur.nodes = append(cur.nodes, silbling)
 			copy(cur.keys[at+1:], cur.keys[at:])
 			copy(cur.nodes[at+2:], cur.nodes[at+1:])
 			cur.keys[at] = key
@@ -86,7 +88,7 @@ func (n *btnode) isLeaf() bool {
 }
 
 func (n *btnode) isFull() bool {
-	return len(n.nodes) == 2*n.tree.degree
+	return len(n.keys) == 2*n.tree.degree-1
 }
 
 func (n *btnode) min() ds.Comparable {
@@ -123,7 +125,9 @@ func (n *btnode) search(v ds.Comparable) int {
 
 func (n *btnode) insertKey(v ds.Comparable) {
 	at := n.search(v)
+	n.keys = append(n.keys, v)
 	copy(n.keys[at+1:], n.keys[at:])
+	n.keys[at] = v
 }
 
 func (n *btnode) insertNode(node *btnode) {

@@ -9,35 +9,37 @@ import (
 )
 
 func TestGenericBTree_Insert(t *testing.T) {
-	btree := NewGenericBTree(3)
-	for i := 0; i < 100; i++ {
+	btree := NewGenericBTree(2)
+	for i := 0; i < 10; i++ {
 		btree.Insert(test.Cpb{i})
-		test.AssertNil(t, validateBTree(btree))
+		test.AssertNil(t, validateBTree(btree), fmt.Sprintf("iter%d", i))
+		test.Assert(t, i+1, btree.size)
 	}
+	printBtree(btree)
 }
 
 func validateBTree(t *GenericBTree) error {
 	if t.root == nil {
 		return nil
 	}
-	level := 0
 	q := []*btnode{t.root}
 	for len(q) != 0 {
 		cur := q[0]
-		if err := validateBtnode(cur, level == t.level-1, t.root == cur); err != nil {
+		q = q[1:]
+		if err := validateBtnode(cur, t.root == cur); err != nil {
 			return err
 		}
 		for _, node := range cur.nodes {
 			q = append(q, node)
 		}
-		level++
 	}
 	return nil
 }
 
 // key[i+1] >= key[i]
 // key[i-1] <= nodes[i].min < key[i]
-func validateBtnode(node *btnode, isleaf, isroot bool) error {
+func validateBtnode(node *btnode, isroot bool) error {
+	isleaf := node.isLeaf()
 	if !isleaf && !isroot && len(node.keys) < node.tree.degree-1 {
 		return fmt.Errorf("key number %d less than degree-1: %d", len(node.keys), node.tree.degree-1)
 	}
@@ -58,8 +60,8 @@ func validateBtnode(node *btnode, isleaf, isroot bool) error {
 			if key.CompareTo(last) < 0 {
 				return fmt.Errorf("unexpected key index")
 			}
-			if !isleaf && node.nodes[i].min().CompareTo(last) < 0 ||
-				node.nodes[i].max().CompareTo(key) >= 0 {
+			if !isleaf && (node.nodes[i].min().CompareTo(last) < 0 ||
+				node.nodes[i].max().CompareTo(key) >= 0) {
 				return fmt.Errorf("unexpected node index")
 			}
 		}
@@ -68,4 +70,24 @@ func validateBtnode(node *btnode, isleaf, isroot bool) error {
 		return fmt.Errorf("unexpected node index")
 	}
 	return nil
+}
+
+func printBtree(tree *GenericBTree) {
+	if tree.root == nil {
+		return
+	}
+	q := make([]*btnode, 0)
+	q = append(q, tree.root)
+	for len(q) != 0 {
+		size := len(q)
+		for i := 0; i < size; i++ {
+			cur := q[0]
+			q = q[1:]
+			fmt.Print(cur.keys, "/")
+			for _, node := range cur.nodes {
+				q = append(q, node)
+			}
+		}
+		fmt.Println()
+	}
 }
