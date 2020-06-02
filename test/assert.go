@@ -21,9 +21,13 @@ func Assert(t *testing.T, e, g interface{}, msg ...string) {
 	t.Errorf("%s expected %v, got %v", s, e, g)
 }
 
-func AssertNonNil(t *testing.T, got interface{}) {
+func AssertNonNil(t *testing.T, got interface{}, msg ...string) {
+	s := ""
+	for _, m := range msg {
+		s += m
+	}
 	if got == nil || IsNil(got) {
-		t.Errorf("expected non-nil value, got %v", got)
+		t.Errorf("%s expected non-nil value, got %v", s, got)
 	}
 }
 

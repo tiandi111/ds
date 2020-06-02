@@ -37,8 +37,96 @@ func (t *GenericBTree) Insert(v ds.Comparable) {
 		stack = append(stack, cur)
 		cur = cur.nodes[cur.search(v)]
 	}
-	cur.insertKey(v)
+	cur.insertKeyNode(v, nil)
 	spill(cur, stack)
+}
+
+func (t *GenericBTree) Remove(v ds.Comparable) interface{} {
+	if t.root == nil {
+		return nil
+	}
+	stack := make([]*btnode, 0, t.level)
+	cur := t.root
+	kidx := -1
+	// find the key and save the path as a stack
+	for cur != nil {
+		stack = append(stack, cur)
+		idx := cur.search(v)
+		if idx < len(cur.keys) && cur.keys[idx].CompareTo(v) == 0 {
+			kidx = idx
+			break
+		}
+		if !cur.isLeaf() {
+			cur = cur.nodes[idx]
+		} else {
+			break
+		}
+	}
+	// key not found
+	if kidx == -1 {
+		return nil
+	}
+	if !cur.isLeaf() {
+		if len(cur.nodes[kidx].keys) >= t.degree {
+			next := cur.nodes[kidx]
+			for !next.isLeaf() {
+				stack = append(stack, next)
+				next = next.last()
+			}
+			predecessor := next.max()
+			cur.keys[kidx] = predecessor
+			cur = next
+		} else if len(cur.nodes[kidx+1].keys) >= t.degree {
+			next := cur.nodes[kidx+1]
+			for !next.isLeaf() {
+				stack = append(stack, next)
+				next = next.first()
+			}
+			succesor := next.min()
+			cur.keys[kidx] = succesor
+			cur = next
+		} else {
+			front := cur.nodes[kidx]
+			back := cur.nodes[kidx+1]
+			front.keys = append(front.keys, cur.keys[kidx])
+			front.keys = append(front.keys, back.keys...)
+			front.nodes = append(front.nodes, back.nodes...)
+			cur.keys[kidx:] = cur.keys[kidx+1:]
+			cur.keys = cur.keys[:len(cur.keys)-1]
+			cur.nodes[kidx+1:] = cur.nodes[kidx+2:]
+			cur.nodes = cur.nodes[:len(cur.nodes)-1]
+			// todo: remove keys from front
+		}
+	}
+	return nil
+}
+
+func replaceByPredecessor() {
+
+}
+
+func replaceBySuccessor() {
+
+}
+
+func merge() {
+
+}
+
+func (t *GenericBTree) Find(v ds.Comparable) interface{} {
+	cur := t.root
+	for cur != nil {
+		idx := cur.search(v)
+		if idx < len(cur.keys) && cur.keys[idx].CompareTo(v) == 0 {
+			return cur.keys[idx]
+		}
+		if !cur.isLeaf() {
+			cur = cur.nodes[idx]
+		} else {
+			break
+		}
+	}
+	return nil
 }
 
 func spill(leaf *btnode, pstack []*btnode) {
@@ -47,13 +135,8 @@ func spill(leaf *btnode, pstack []*btnode) {
 		silbling, key := cur.spilt()
 		if len(pstack) != 0 {
 			cur = pstack[len(pstack)-1]
-			at := cur.search(key)
-			cur.keys = append(cur.keys, key)
-			cur.nodes = append(cur.nodes, silbling)
-			copy(cur.keys[at+1:], cur.keys[at:])
-			copy(cur.nodes[at+2:], cur.nodes[at+1:])
-			cur.keys[at] = key
-			cur.nodes[at+1] = silbling
+			pstack = pstack[0 : len(pstack)-1]
+			cur.insertKeyNode(key, silbling)
 		} else {
 			newRoot := newbtnode(key, cur.tree)
 			newRoot.nodes = append(newRoot.nodes, cur)
@@ -88,7 +171,7 @@ func (n *btnode) isLeaf() bool {
 }
 
 func (n *btnode) isFull() bool {
-	return len(n.keys) == 2*n.tree.degree-1
+	return len(n.keys) == 2*n.tree.degree
 }
 
 func (n *btnode) min() ds.Comparable {
@@ -114,24 +197,26 @@ func (n *btnode) last() *btnode {
 }
 
 // invariant: len(nodes) == len(keys)+1
+// return the right node index to go
 func (n *btnode) search(v ds.Comparable) int {
 	for i, e := range n.keys {
-		if v.CompareTo(e) < 0 {
+		if v.CompareTo(e) <= 0 {
 			return i
 		}
 	}
 	return len(n.keys)
 }
 
-func (n *btnode) insertKey(v ds.Comparable) {
+func (n *btnode) insertKeyNode(v ds.Comparable, node *btnode) {
 	at := n.search(v)
 	n.keys = append(n.keys, v)
 	copy(n.keys[at+1:], n.keys[at:])
 	n.keys[at] = v
-}
-
-func (n *btnode) insertNode(node *btnode) {
-
+	if node != nil {
+		n.nodes = append(n.nodes, node)
+		copy(n.nodes[at+2:], n.nodes[at+1:])
+		n.nodes[at+1] = node
+	}
 }
 
 func (n *btnode) spilt() (*btnode, ds.Comparable) {
