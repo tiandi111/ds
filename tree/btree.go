@@ -45,18 +45,18 @@ func (t *GenericBTree) Remove(v ds.Comparable) interface{} {
 	if t.root == nil {
 		return nil
 	}
-	stack := make([]*btnode, 0, t.level)
+	stack := make([]*nodeTrace, 0, t.level)
 	cur := t.root
 	kidx := -1
-	// find the key and save the path as a stack
+	// find the key and save the path in stack
 	for cur != nil {
-		stack = append(stack, cur)
 		idx := cur.search(v)
 		if idx < len(cur.keys) && cur.keys[idx].CompareTo(v) == 0 {
 			kidx = idx
 			break
 		}
 		if !cur.isLeaf() {
+			stack = append(stack, &nodeTrace{cur, idx})
 			cur = cur.nodes[idx]
 		} else {
 			break
@@ -68,49 +68,129 @@ func (t *GenericBTree) Remove(v ds.Comparable) interface{} {
 	}
 	if !cur.isLeaf() {
 		if len(cur.nodes[kidx].keys) >= t.degree {
-			next := cur.nodes[kidx]
-			for !next.isLeaf() {
-				stack = append(stack, next)
-				next = next.last()
-			}
-			predecessor := next.max()
-			cur.keys[kidx] = predecessor
-			cur = next
+
+			cur = replaceWithPredecessor(cur, kidx, stack)
+			kidx = len(cur.keys) - 1
+
 		} else if len(cur.nodes[kidx+1].keys) >= t.degree {
-			next := cur.nodes[kidx+1]
-			for !next.isLeaf() {
-				stack = append(stack, next)
-				next = next.first()
-			}
-			succesor := next.min()
-			cur.keys[kidx] = succesor
-			cur = next
+
+			cur = replaceWithSuccessor(cur, kidx, stack)
+			kidx = 0
+
 		} else {
-			front := cur.nodes[kidx]
-			back := cur.nodes[kidx+1]
-			front.keys = append(front.keys, cur.keys[kidx])
-			front.keys = append(front.keys, back.keys...)
-			front.nodes = append(front.nodes, back.nodes...)
-			cur.keys[kidx:] = cur.keys[kidx+1:]
-			cur.keys = cur.keys[:len(cur.keys)-1]
-			cur.nodes[kidx+1:] = cur.nodes[kidx+2:]
-			cur.nodes = cur.nodes[:len(cur.nodes)-1]
-			// todo: remove keys from front
+			// todo: what if len(cur.keys) < t.degree?
+			cur = merge(cur, kidx)
+			return t.Remove(v)
+
 		}
 	}
+	deleteKeyFromLeaf(cur, kidx, stack)
 	return nil
 }
 
-func replaceByPredecessor() {
-
+type nodeTrace struct {
+	node *btnode
+	nidx int
 }
 
-func replaceBySuccessor() {
-
+// replace the key of the node at index kidx with its predecessor
+func replaceWithPredecessor(node *btnode, kidx int, stack []*nodeTrace) *btnode {
+	next := node.nodes[kidx]
+	for !next.isLeaf() {
+		stack = append(stack, &nodeTrace{next, len(next.nodes) - 1})
+		next = next.last()
+	}
+	node.keys[kidx] = next.max()
+	return next
 }
 
-func merge() {
+func replaceWithSuccessor(node *btnode, kidx int, stack []*nodeTrace) *btnode {
+	next := node.nodes[kidx+1]
+	for !next.isLeaf() {
+		stack = append(stack, &nodeTrace{next, 0})
+		next = next.first()
+	}
+	node.keys[kidx] = next.min()
+	return next
+}
 
+func merge(node *btnode, kidx int) *btnode {
+	front := node.nodes[kidx]
+	back := node.nodes[kidx+1]
+	// merge key and back node into front node
+	front.keys = append(front.keys, node.keys[kidx])
+	front.keys = append(front.keys, back.keys...)
+	front.nodes = append(front.nodes, back.nodes...)
+	// delete key and back node
+	node.keys[kidx:] = node.keys[kidx+1:]
+	node.keys = node.keys[:len(node.keys)-1]
+	node.nodes[kidx+1:] = node.nodes[kidx+2:]
+	node.nodes = node.nodes[:len(node.nodes)-1]
+	return front
+}
+
+func deleteKeyFromLeaf(node *btnode, kidx int, stack []*nodeTrace) {
+	if !node.isLeaf() {
+		panic("not a leaf node") // panic for testing
+	}
+	node.keys[kidx:] = node.keys[kidx+1:]
+	node.keys = node.keys[:len(node.keys)-1]
+	cur := node
+	for len(stack) != 0 {
+		if len(cur.keys) >= node.tree.degree-1 {
+			return
+		}
+
+		parent := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+
+		cidx := parent.nidx
+		pnode := parent.node
+
+		if cidx > 0 && len(pnode.nodes[cidx-1].keys) >= node.tree.degree {
+
+			rotateToRight(cur, pnode, cidx)
+
+		} else if cidx < len(pnode.nodes)-1 && len(pnode.nodes[cidx+1].keys) >= node.tree.degree {
+
+			rotateToLeft(cur, pnode, cidx)
+
+		} else {
+
+			if cidx == len(parent.node.nodes)-1 {
+				cidx--
+			}
+			merge(pnode, cidx)
+
+		}
+		cur = pnode
+	}
+	if len(stack) == 0 {
+		if len(cur.keys) == 0 {
+			cur.tree.level--
+			cur.tree.root = cur.nodes[0]
+		}
+	}
+}
+
+func rotateToRight(cur, pnode *btnode, cidx int) {
+	front := pnode.nodes[cidx-1]
+	cur.keys[1:] = cur.keys // will length be truncated?
+	cur.keys[0] = pnode.keys[cidx-1]
+	cur.nodes[1:] = cur.nodes
+	cur.nodes[0] = front.last()
+	pnode.keys[cidx-1] = front.max()
+	front.keys = front.keys[:len(front.keys)-1]
+	front.nodes = front.nodes[:len(front.nodes)-1]
+}
+
+func rotateToLeft(cur, pnode *btnode, cidx int) {
+	back := pnode.nodes[cidx+1]
+	cur.keys = append(cur.keys, pnode.keys[cidx])
+	cur.nodes = append(cur.nodes, back.nodes[0])
+	pnode.keys[cidx] = back.keys[0]
+	back.keys = back.keys[1:]
+	back.nodes = back.nodes[1:]
 }
 
 func (t *GenericBTree) Find(v ds.Comparable) interface{} {
@@ -197,7 +277,7 @@ func (n *btnode) last() *btnode {
 }
 
 // invariant: len(nodes) == len(keys)+1
-// return the right node index to go
+// return the correct node index to go
 func (n *btnode) search(v ds.Comparable) int {
 	for i, e := range n.keys {
 		if v.CompareTo(e) <= 0 {
