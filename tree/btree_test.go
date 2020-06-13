@@ -12,21 +12,39 @@ import (
 
 func TestGenericBTree(t *testing.T) {
 	for d := 2; d < 10; d++ {
+		size := 2000
 		btree := NewGenericBTree(d)
 		// test insert
-		for i := 0; i < 1000; i++ {
+		for i := 0; i < size; i++ {
 			btree.Insert(test.Cpb{i})
 			test.AssertNil(t, validateBTree(btree))
 		}
 		// test find
-		for i := 0; i < 1000; i++ {
+		for i := 0; i < size; i++ {
 			test.AssertNonNil(t, btree.Find(test.Cpb{i}), fmt.Sprintf("target: %d", i))
 		}
 		test.AssertNil(t, btree.Find(test.Cpb{-1}))
-		test.AssertNil(t, btree.Find(test.Cpb{1000}))
-
+		test.AssertNil(t, btree.Find(test.Cpb{size + 1}))
+		// print info
 		fmt.Printf("level:%d size:%d\n", btree.level, btree.size)
 		//printBtree(btree)
+		// test remove
+		toRemove := make(map[int]struct{})
+		for i := 0; i < size; i++ {
+			toRemove[i] = struct{}{}
+		}
+		for i, _ := range toRemove {
+			//printBtree(btree)
+			test.Assert(t, i, btree.Remove(test.Cpb{i}).(test.Cpb).Val)
+			//printBtree(btree)
+			test.AssertNil(t, validateBTree(btree))
+			test.AssertNil(t, btree.Find(test.Cpb{i}))
+			delete(toRemove, i)
+			//fmt.Println(i)
+		}
+		test.AssertNil(t, btree.Remove(test.Cpb{-1}))
+		test.AssertNil(t, btree.Remove(test.Cpb{size + 1}))
+		test.Assert(t, 0, btree.size)
 	}
 }
 
