@@ -1,6 +1,8 @@
 package tree
 
 import (
+	"fmt"
+
 	"github.com/tiandi111/ds"
 )
 
@@ -33,7 +35,7 @@ func (t *GenericBTree) Insert(v ds.Comparable) {
 	}
 	stack := make([]*btnode, 0)
 	cur := t.root
-	for !cur.isLeaf() { // means cur node has at least one node
+	for !cur.isLeaf() { // means cur node has at least one child
 		stack = append(stack, cur)
 		cur = cur.nodes[cur.search(v)]
 	}
@@ -231,7 +233,7 @@ func spill(leaf *btnode, pstack []*btnode) {
 		silbling, key := cur.spilt()
 		if len(pstack) != 0 {
 			cur = pstack[len(pstack)-1]
-			pstack = pstack[0 : len(pstack)-1]
+			pstack = pstack[:len(pstack)-1]
 			cur.insertKeyNode(key, silbling)
 		} else {
 			newRoot := newbtnode(key, cur.tree)
@@ -322,13 +324,37 @@ func (n *btnode) spilt() (*btnode, ds.Comparable) {
 	mid := len(n.keys) / 2
 	upkey := n.keys[mid]
 	sibling := &btnode{
-		keys: n.keys[mid+1:],
+		keys: make([]ds.Comparable, len(n.keys)-mid-1),
 		tree: n.tree,
 	}
+	// when split keys and nodes, don't do this:  sibling.keys = n.keys[mid+1:]
+	// because they share the same underlying array, which will cause memory corruption when insert new keys or nodes
+	copy(sibling.keys, n.keys[mid+1:])
 	n.keys = n.keys[:mid]
 	if !n.isLeaf() { // then n must has children
-		sibling.nodes = n.nodes[mid+1:]
+		sibling.nodes = make([]*btnode, len(n.nodes)-mid-1)
+		copy(sibling.nodes, n.nodes[mid+1:])
 		n.nodes = n.nodes[:mid+1]
 	}
 	return sibling, upkey
+}
+
+func printBtree(tree *GenericBTree) {
+	if tree.root == nil {
+		return
+	}
+	q := make([]*btnode, 0)
+	q = append(q, tree.root)
+	for len(q) != 0 {
+		size := len(q)
+		for i := 0; i < size; i++ {
+			cur := q[0]
+			q = q[1:]
+			fmt.Printf("%v/", cur.keys)
+			for _, child := range cur.nodes {
+				q = append(q, child)
+			}
+		}
+		fmt.Println()
+	}
 }

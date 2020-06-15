@@ -11,13 +11,18 @@ import (
 )
 
 func TestGenericBTree(t *testing.T) {
-	for d := 2; d < 10; d++ {
-		size := 2000
+	for d := 2; d < 15; d++ {
+		size := 3000
 		btree := NewGenericBTree(d)
 		// test insert
+		toInsert := make(map[int]struct{})
 		for i := 0; i < size; i++ {
+			toInsert[i] = struct{}{}
+		}
+		for i, _ := range toInsert {
 			btree.Insert(test.Cpb{i})
 			test.AssertNil(t, validateBTree(btree))
+			delete(toInsert, i)
 		}
 		// test find
 		for i := 0; i < size; i++ {
@@ -104,24 +109,4 @@ func validateBtnode(node *btnode, isleaf, isroot bool) error {
 		return fmt.Errorf("unexpected node index")
 	}
 	return nil
-}
-
-func printBtree(tree *GenericBTree) {
-	if tree.root == nil {
-		return
-	}
-	q := make([]*btnode, 0)
-	q = append(q, tree.root)
-	for len(q) != 0 {
-		size := len(q)
-		for i := 0; i < size; i++ {
-			cur := q[0]
-			q = q[1:]
-			fmt.Printf("%v/", cur.keys)
-			for _, child := range cur.nodes {
-				q = append(q, child)
-			}
-		}
-		fmt.Println()
-	}
 }
