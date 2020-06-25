@@ -1,8 +1,9 @@
 package tree
 
 import (
-	"github.com/tiandi111/ds"
 	"log"
+
+	"github.com/tiandi111/ds"
 )
 
 type GenericBinarySearchTree struct {
@@ -39,7 +40,7 @@ func (t *GenericBinarySearchTree) Insert(c ds.Comparable) {
 	}
 }
 
-func (t *GenericBinarySearchTree) Remove(c ds.Comparable) ds.Comparable {
+func (t *GenericBinarySearchTree) Remove(c ds.Comparable) interface{} {
 	return t.remove(c).value()
 }
 

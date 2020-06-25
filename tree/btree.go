@@ -1,7 +1,12 @@
 package tree
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
+	"io"
+	"strconv"
+	"strings"
 
 	"github.com/tiandi111/ds"
 )
@@ -17,16 +22,17 @@ import (
 
 type GenericBTree struct {
 	root   *btnode
+	des    ds.Deserializer
 	degree int
 	size   int
 	level  int
 }
 
-func NewGenericBTree(d int) *GenericBTree {
-	return &GenericBTree{degree: d}
+func NewGenericBTree(d int, des ds.Deserializer) *GenericBTree {
+	return &GenericBTree{degree: d, des: des}
 }
 
-func (t *GenericBTree) Insert(v ds.Comparable) {
+func (t *GenericBTree) Insert(v ds.Element) {
 	t.size++
 	if t.root == nil {
 		t.root = newbtnode(v, t)
@@ -43,7 +49,7 @@ func (t *GenericBTree) Insert(v ds.Comparable) {
 	spill(cur, stack)
 }
 
-func (t *GenericBTree) Remove(v ds.Comparable) interface{} {
+func (t *GenericBTree) Remove(v ds.Element) interface{} {
 	if t.root == nil {
 		return nil
 	}
@@ -211,7 +217,7 @@ func rotateToLeft(cur, pnode *btnode, cidx int) {
 	}
 }
 
-func (t *GenericBTree) Find(v ds.Comparable) interface{} {
+func (t *GenericBTree) Find(v ds.Element) interface{} {
 	cur := t.root
 	for cur != nil {
 		idx := cur.search(v)
@@ -246,17 +252,171 @@ func spill(leaf *btnode, pstack []*btnode) {
 	}
 }
 
+func (t *GenericBTree) Serialize(w io.Writer) error {
+	err := t.writeMeta(w)
+	if err != nil {
+		return err
+	}
+	_, err = w.Write([]byte{29})
+	if err != nil {
+		return err
+	}
+	if t.root == nil { // should we write something when root is nil?
+		return nil
+	}
+	// serialize in a level-traversal fashion
+	q := []*btnode{t.root}
+	for len(q) != 0 {
+		size := len(q)
+		for i := 0; i < size; i++ {
+			cur := q[0]
+			q = q[1:]
+			err := cur.Serialize(w)
+			if err != nil {
+				return err
+			}
+			_, err = w.Write([]byte{30})
+			if err != nil {
+				return err
+			}
+			for _, c := range cur.nodes {
+				q = append(q, c)
+			}
+		}
+	}
+	return nil
+}
+
+func (t *GenericBTree) writeMeta(w io.Writer) error {
+	_, err := w.Write([]byte(fmt.Sprintf("%d,%d,%d", t.degree, t.size, t.level)))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (t *btnode) Serialize(w io.Writer) error {
+	for _, key := range t.keys {
+		err := key.Serialize(w)
+		if err != nil {
+			return err
+		}
+		_, err = w.Write([]byte{31}) // unit separator
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (t *btnode) Deserialize(buf *bytes.Buffer, deserializer ds.Deserializer) error {
+	t.keys = make([]ds.Element, 0)
+	for {
+		data, err := buf.ReadBytes(31)
+		if err != nil {
+			if err == io.EOF {
+				return nil
+			}
+			return err
+		}
+		key, err := deserializer(bytes.NewBuffer(data[:len(data)-1]))
+		if err != nil {
+			return err
+		}
+		t.keys = append(t.keys, key)
+	}
+	return nil
+}
+
+func (t *GenericBTree) Deserialize(r io.Reader) error {
+	var buf bytes.Buffer
+	_, err := buf.ReadFrom(r)
+	if err != nil {
+		return err
+	}
+	err = t.readMeta(&buf)
+	if err != nil {
+		return err
+	}
+	t.root, err = t.NextNode(&buf)
+	if err != nil {
+		if err == io.EOF {
+			return nil
+		}
+		return err
+	}
+	q := []*btnode{t.root}
+	for len(q) != 0 {
+		size := len(q)
+		for i := 0; i < size; i++ {
+			cur := q[0]
+			q = q[1:]
+			cur.nodes = make([]*btnode, 0)
+			for j := 0; j <= len(cur.keys); j++ {
+				node, err := t.NextNode(&buf)
+				if err != nil {
+					if err == io.EOF {
+						return nil
+					}
+					return err
+				}
+				cur.nodes = append(cur.nodes, node)
+				q = append(q, node)
+			}
+		}
+	}
+	return nil
+}
+
+func (t *GenericBTree) NextNode(buf *bytes.Buffer) (*btnode, error) {
+	data, err := buf.ReadBytes(30)
+	if err != nil {
+		return nil, err
+	}
+	node := new(btnode)
+	node.tree = t
+	err = node.Deserialize(bytes.NewBuffer(data[:len(data)-1]), t.des)
+	if err != nil {
+		return nil, err
+	}
+	return node, nil
+}
+
+func (t *GenericBTree) readMeta(buf *bytes.Buffer) error {
+	metaStr, err := buf.ReadString(29)
+	if err != nil {
+		return err
+	}
+	fileds := strings.Split(metaStr[:len(metaStr)-1], ",")
+	if len(fileds) < 3 {
+		return errors.New("invalid meta: lack of field")
+	}
+	t.degree, err = strconv.Atoi(fileds[0])
+	if err != nil {
+		return errors.New("invalid meta, degree")
+	}
+	t.size, err = strconv.Atoi(fileds[1])
+	if err != nil {
+		return errors.New("invalid meta, size")
+	}
+	t.level, err = strconv.Atoi(fileds[2])
+	if err != nil {
+		return errors.New("invalid meta, level")
+	}
+	return nil
+}
+
 type btnode struct {
-	keys  []ds.Comparable
+	keys  []ds.Element
 	nodes []*btnode
 	tree  *GenericBTree
 }
 
 // cap(keys) = 2*t - 1
 // t-1  <= len(keys) <= 2*t - 1
-func newbtnode(v ds.Comparable, tree *GenericBTree) *btnode {
+func newbtnode(v ds.Element, tree *GenericBTree) *btnode {
 	node := &btnode{
-		keys:  make([]ds.Comparable, 0, 2*tree.degree), // capacity is 2*tree*degree so we pre-allocate an entry for spilled key
+		keys:  make([]ds.Element, 0, 2*tree.degree), // capacity is 2*tree*degree so we pre-allocate an entry for spilled key
 		nodes: make([]*btnode, 0, 2*tree.degree),
 		tree:  tree,
 	}
@@ -272,11 +432,11 @@ func (n *btnode) isFull() bool {
 	return len(n.keys) == 2*n.tree.degree
 }
 
-func (n *btnode) min() ds.Comparable {
+func (n *btnode) min() ds.Element {
 	return n.keys[0]
 }
 
-func (n *btnode) max() ds.Comparable {
+func (n *btnode) max() ds.Element {
 	return n.keys[len(n.keys)-1]
 }
 
@@ -296,7 +456,7 @@ func (n *btnode) last() *btnode {
 
 // invariant: len(nodes) == len(keys)+1
 // return the correct node index to go
-func (n *btnode) search(v ds.Comparable) int {
+func (n *btnode) search(v ds.Element) int {
 	for i, e := range n.keys {
 		if v.CompareTo(e) <= 0 {
 			return i
@@ -305,7 +465,7 @@ func (n *btnode) search(v ds.Comparable) int {
 	return len(n.keys)
 }
 
-func (n *btnode) insertKeyNode(v ds.Comparable, node *btnode) {
+func (n *btnode) insertKeyNode(v ds.Element, node *btnode) {
 	at := n.search(v)
 	n.keys = append(n.keys, v)
 	copy(n.keys[at+1:], n.keys[at:])
@@ -317,14 +477,14 @@ func (n *btnode) insertKeyNode(v ds.Comparable, node *btnode) {
 	}
 }
 
-func (n *btnode) spilt() (*btnode, ds.Comparable) {
+func (n *btnode) spilt() (*btnode, ds.Element) {
 	if !n.isFull() {
 		return nil, nil
 	}
 	mid := len(n.keys) / 2
 	upkey := n.keys[mid]
 	sibling := &btnode{
-		keys: make([]ds.Comparable, len(n.keys)-mid-1),
+		keys: make([]ds.Element, len(n.keys)-mid-1),
 		tree: n.tree,
 	}
 	// when split keys and nodes, don't do this:  sibling.keys = n.keys[mid+1:]
@@ -350,7 +510,10 @@ func printBtree(tree *GenericBTree) {
 		for i := 0; i < size; i++ {
 			cur := q[0]
 			q = q[1:]
-			fmt.Printf("%v/", cur.keys)
+			for j := 0; j < len(cur.keys); j++ {
+				fmt.Printf("%s ", cur.keys[j].String())
+			}
+			fmt.Print("/")
 			for _, child := range cur.nodes {
 				q = append(q, child)
 			}

@@ -1,5 +1,16 @@
 package ds
 
+import (
+	"fmt"
+	"io"
+)
+
+type Element interface {
+	Comparable
+	Serializable
+	fmt.Stringer
+}
+
 type Comparable interface {
 	// return
 	// this > other if this.CompareTo(other) > 0
@@ -14,3 +25,10 @@ type Iterator interface {
 	Index() int
 	GetValue() interface{}
 }
+
+type Serializable interface {
+	Serialize(io.Writer) error
+	Deserialize(io.Reader) error
+}
+
+type Deserializer func(io.Reader) (Element, error)

@@ -1,8 +1,10 @@
 package tree
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"testing"
 
 	"github.com/tiandi111/ds/test"
@@ -11,28 +13,28 @@ import (
 )
 
 func TestGenericBTree(t *testing.T) {
-	for d := 2; d < 15; d++ {
-		size := 3000
-		btree := NewGenericBTree(d)
+	for d := 2; d < 3; d++ {
+		size := 10
+		btree := NewGenericBTree(d, test.SerializableCpbDeserializer)
 		// test insert
 		toInsert := make(map[int]struct{})
 		for i := 0; i < size; i++ {
 			toInsert[i] = struct{}{}
 		}
 		for i, _ := range toInsert {
-			btree.Insert(test.Cpb{i})
+			btree.Insert(&test.SerializableCpb{i})
 			test.AssertNil(t, validateBTree(btree))
 			delete(toInsert, i)
 		}
 		// test find
 		for i := 0; i < size; i++ {
-			test.AssertNonNil(t, btree.Find(test.Cpb{i}), fmt.Sprintf("target: %d", i))
+			test.AssertNonNil(t, btree.Find(&test.SerializableCpb{i}), fmt.Sprintf("target: %d", i))
 		}
-		test.AssertNil(t, btree.Find(test.Cpb{-1}))
-		test.AssertNil(t, btree.Find(test.Cpb{size + 1}))
+		test.AssertNil(t, btree.Find(&test.SerializableCpb{-1}))
+		test.AssertNil(t, btree.Find(&test.SerializableCpb{size + 1}))
 		// print info
 		fmt.Printf("level:%d size:%d\n", btree.level, btree.size)
-		//printBtree(btree)
+		printBtree(btree)
 		// test remove
 		toRemove := make(map[int]struct{})
 		for i := 0; i < size; i++ {
@@ -40,17 +42,36 @@ func TestGenericBTree(t *testing.T) {
 		}
 		for i, _ := range toRemove {
 			//printBtree(btree)
-			test.Assert(t, i, btree.Remove(test.Cpb{i}).(test.Cpb).Val)
+			test.Assert(t, i, btree.Remove(&test.SerializableCpb{i}).(*test.SerializableCpb).Val)
 			//printBtree(btree)
 			test.AssertNil(t, validateBTree(btree))
-			test.AssertNil(t, btree.Find(test.Cpb{i}))
+			test.AssertNil(t, btree.Find(&test.SerializableCpb{i}))
 			delete(toRemove, i)
 			//fmt.Println(i)
 		}
-		test.AssertNil(t, btree.Remove(test.Cpb{-1}))
-		test.AssertNil(t, btree.Remove(test.Cpb{size + 1}))
+		test.AssertNil(t, btree.Remove(&test.SerializableCpb{-1}))
+		test.AssertNil(t, btree.Remove(&test.SerializableCpb{size + 1}))
 		test.Assert(t, 0, btree.size)
 	}
+}
+
+func TestGenericBTree_Serialization(t *testing.T) {
+	btree := NewGenericBTree(3, test.SerializableCpbDeserializer)
+	for i := 0; i < 100; i++ {
+		btree.Insert(&test.SerializableCpb{i})
+	}
+	var buf bytes.Buffer
+	err := btree.Serialize(&buf)
+	test.AssertNil(t, err)
+	data, err := ioutil.ReadAll(&buf)
+	test.AssertNil(t, err)
+	fmt.Println(string(data))
+
+	btree1 := NewGenericBTree(3, test.SerializableCpbDeserializer)
+	err = btree1.Deserialize(bytes.NewBuffer(data))
+	test.AssertNil(t, err)
+	printBtree(btree1)
+	test.AssertNil(t, validateBTree(btree1))
 }
 
 func validateBTree(t *GenericBTree) error {

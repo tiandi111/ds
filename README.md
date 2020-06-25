@@ -7,7 +7,7 @@ Array List √<br/>
 Linked List √<br/>
 Doubly Linked List △<br/>
 Queue<br/>
-Skip List ○<br/>
+Skip List √<br/>
 Stack √<br/>
 Zip List<br/>
 ## Tree
@@ -15,6 +15,7 @@ Avl Tree ○<br/>
 Binary Search Tree √<br/>
 Treap √<br/>
 Zip Tree<br/>
+B Tree √<br/> 
 B+ Tree<br/>
 Red-Black Tree<br/>
 Prefix Tries<br/>
@@ -32,3 +33,6 @@ Union-Find Set △<br/>
 ## Graph
 Directed Graph<br/>
 Undirected Graph<br/>
+
+## TODO
+- serialization and deserialization
