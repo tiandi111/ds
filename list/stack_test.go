@@ -2,8 +2,9 @@ package list
 
 import (
 	"fmt"
-	"github.com/tiandi111/ds/test"
 	"testing"
+
+	"github.com/tiandi111/ds/test"
 )
 
 func TestNewGenericStack(t *testing.T) {
@@ -12,9 +13,9 @@ func TestNewGenericStack(t *testing.T) {
 	test.AssertNonNil(t, stack.arr)
 }
 
-func TestStack(t *testing.T) {
-	stack := NewGenericStack(0)
-}
+//func TestStack(t *testing.T) {
+//	stack := NewGenericStack(0)
+//}
 
 func TestGenericStack_Push(t *testing.T) {
 	stack := NewGenericStack(10)
